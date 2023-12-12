@@ -1,0 +1,94 @@
+﻿@using Microsoft.EntityFrameworkCore
+@using Assignment.Model
+@page "/"
+<h3>Classes</h3>
+
+<h3>Students List</h3>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Student ID</th>
+            <th>Name</th>
+            <th>Major</th>
+            <th>Standing</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var student in students)
+        {
+            <tr>
+                <td>@student.Sid</td>
+                <td>@student.SName</td>
+                <td>@student.Major</td>
+                <td>@student.Standing</td>
+            </tr>
+        }
+    </tbody>
+</table>
+@code {
+
+    private List<Student> students;
+
+    protected override void OnInitialized()
+    {
+        students = context.Students.ToList();
+    }
+    public AppDbContext Context = new AppDbContext(new DbContextOptions<AppDbContext>());
+    private Enrollment Enrollment = new Enrollment();
+    private Student student = new Student();
+
+    public void Checkfor()
+    {
+        var s = Context.Class
+        .Include(x => x.Enrollments)
+        .Where(w => w.Enrollments.Count > 100)
+        .ToList();
+    }
+    public List<Student> getstd()
+    {
+        var stdList = Context.Enrollment
+         .Include(s => s.Student)
+         .Include(e => e.Class)
+         .ThenInclude(c => c.Faculty)
+         .Where(s => s.Class.Faculty.deptid != 22)
+         .Select(s => new Student
+             {
+                 sid = s.Student.sid,
+                 major = s.Student.major
+             })
+         .ToList();
+        return stdList;
+    }
+    protected override void OnInitialized()
+    {
+
+        var stdlista = Context.Student
+       .Include(x => x.Enrollments)
+       .Where(x => x.Enrollments == null)
+       .ToList();
+
+
+        var stdlistc = Context.Student
+       .Include(x => x.Enrollments)
+       .Where(x => x.Enrollments.Count > 2)
+
+       .Select(x => new { x.sname, x.Enrollments.Count })
+       .ToList();
+
+        var stdlistd = Context.Faculty
+        .Include(x => x.Class)
+        .OrderByDescending(x => x.Class.Count)
+        .Select(x => new
+        { x.fname, x.Class.Count })
+        .ToList();
+
+        var stdlisty = Context.Enrollment
+       .Include(x => x.Class)
+       .ThenInclude(x => x.Faculty)
+       .Include(x => x.Student)
+       .Where(x => x.Class.Faculty.fname == "CS")
+       .Select(x => new { x.Student.sname })
+       .ToList();
+    }
+}
